@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ClearLine — Content Moderation AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+  <aside class="sidebar">
+    <div class="logo">
+      <span class="logo-icon">CL</span>
+      <span class="logo-text">ClearLine</span>
+    </div>
+    <nav class="nav">
+  <a class="nav-item active" href="#" onclick="showPage('dashboard', 'Dashboard', 'Overview of your content moderation activity.', this)">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Dashboard
+  </a>
+  <a class="nav-item" href="#" onclick="showPage('analyze', 'Analyze Text', 'Paste comments below to detect harmful content.', this)">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    Analyze Text
+  </a>
+  <a class="nav-item" href="#" onclick="showPage('analytics', 'Analytics', 'Visual breakdown of your latest analysis.', this)">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Analytics
+  </a>
+  <a class="nav-item" href="#" onclick="showPage('safety', 'Safety Rules', 'How ClearLine detects and classifies harmful content.', this)">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    Safety Rules
+  </a>
+</nav>
+    <div class="sidebar-footer">
+      <div class="model-badge">
+        <span class="dot"></span>
+        Model Active
+      </div>
+      <p class="model-name">TF-IDF · LogReg</p>
+    </div>
+  </aside>
+
+ <main class="main">
+
+  <!-- TOPBAR (always visible) -->
+  <header class="topbar">
+    <div>
+      <h1 class="page-title" id="page-title">Dashboard</h1>
+      <p class="page-sub" id="page-sub">Overview of your content moderation activity.</p>
+    </div>
+    <div class="topbar-right">
+      <div class="status-pill">
+        <span class="dot green"></span> System Online
+      </div>
+    </div>
+  </header>
+
+  <!-- PAGE: DASHBOARD -->
+  <div id="page-dashboard" class="page active">
+    <section class="stats-row" id="stats-row">
+      <div class="stat-card">
+        <p class="stat-label">Total Analyzed</p>
+        <p class="stat-value" id="stat-total">0</p>
+      </div>
+      <div class="stat-card danger">
+        <p class="stat-label">Harmful</p>
+        <p class="stat-value" id="stat-harmful">0</p>
+      </div>
+      <div class="stat-card safe">
+        <p class="stat-label">Safe</p>
+        <p class="stat-value" id="stat-safe">0</p>
+      </div>
+      <div class="stat-card warn">
+        <p class="stat-label">Hate Speech</p>
+        <p class="stat-value" id="stat-hate">0</p>
+      </div>
+      <div class="stat-card orange">
+        <p class="stat-label">Threats</p>
+        <p class="stat-value" id="stat-threat">0</p>
+      </div>
+    </section>
+
+    <div class="dashboard-welcome panel">
+      <h2 class="welcome-title">Welcome to ClearLine</h2>
+      <p class="welcome-desc">Use the <strong>Analyze Text</strong> tab to paste comments and detect harmful content. Results and charts will appear after your first analysis.</p>
+      <div class="welcome-steps">
+        <div class="step">
+          <span class="step-num">1</span>
+          <p>Click <strong>Analyze Text</strong> in the sidebar</p>
+        </div>
+        <div class="step">
+          <span class="step-num">2</span>
+          <p>Paste comments, one per line</p>
+        </div>
+        <div class="step">
+          <span class="step-num">3</span>
+          <p>Click <strong>Analyze</strong> to run the model</p>
+        </div>
+        <div class="step">
+          <span class="step-num">4</span>
+          <p>View results in <strong>Analytics</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE: ANALYZE TEXT -->
+  <div id="page-analyze" class="page">
+    <section class="two-col" id="analyze-section">
+      <div class="panel input-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Analyze Content</h2>
+          <span class="panel-hint">One comment per line</span>
+        </div>
+        <textarea id="input-text" placeholder="Paste social media comments here, one per line...
+Example:
+You're so talented, keep it up!
+I hate people like you
+I'll find you and make you pay"></textarea>
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="loadExample()">Load example</button>
+          <button class="btn-primary" onclick="analyze()" id="analyze-btn">
+            <span id="btn-text">Analyze</span>
+            <span id="btn-loader" style="display:none">Analyzing...</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="panel chart-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Breakdown</h2>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="pie-chart"></canvas>
+          <div class="chart-placeholder" id="chart-placeholder">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            <p>Run analysis to see breakdown</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel results-panel" id="results-section">
+      <div class="panel-header">
+        <h2 class="panel-title">Results</h2>
+        <button class="btn-ghost" onclick="clearResults()">Clear</button>
+      </div>
+      <div id="results-list"></div>
+    </section>
+  </div>
+
+  <!-- PAGE: ANALYTICS -->
+  <div id="page-analytics" class="page">
+    <div class="panel analytics-panel">
+      <div class="panel-header">
+        <h2 class="panel-title">Content Breakdown</h2>
+        <span class="panel-hint">Based on latest analysis</span>
+      </div>
+      <div class="analytics-grid">
+        <div class="chart-wrap-lg">
+          <canvas id="pie-chart-2"></canvas>
+          <div class="chart-placeholder" id="chart-placeholder-2">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            <p>Run an analysis first to see charts here</p>
+          </div>
+        </div>
+        <div class="analytics-stats">
+          <div class="stat-card">
+            <p class="stat-label">Total Analyzed</p>
+            <p class="stat-value" id="stat-total-2">0</p>
+          </div>
+          <div class="stat-card danger">
+            <p class="stat-label">Harmful</p>
+            <p class="stat-value" id="stat-harmful-2">0</p>
+          </div>
+          <div class="stat-card safe">
+            <p class="stat-label">Safe</p>
+            <p class="stat-value" id="stat-safe-2">0</p>
+          </div>
+          <div class="stat-card warn">
+            <p class="stat-label">Hate Speech</p>
+            <p class="stat-value" id="stat-hate-2">0</p>
+          </div>
+          <div class="stat-card orange">
+            <p class="stat-label">Threats</p>
+            <p class="stat-value" id="stat-threat-2">0</p>
+          </div>
+          <div class="stat-card">
+            <p class="stat-label">Offensive</p>
+            <p class="stat-value" id="stat-offensive-2">0</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE: SAFETY RULES -->
+  <div id="page-safety" class="page">
+    <div class="panel">
+      <div class="panel-header">
+        <h2 class="panel-title">Safety Rules</h2>
+        <span class="panel-hint">How ClearLine classifies content</span>
+      </div>
+      <div class="rules-list">
+        <div class="rule-item">
+          <span class="rule-badge" style="background:rgba(226,75,74,0.15); color:#E24B4A;">Hate Speech</span>
+          <div class="rule-body">
+            <p class="rule-title">Attacks targeting a person or group</p>
+            <p class="rule-desc">Content that demeans, attacks, or calls for discrimination against individuals based on identity, race, religion, or origin.</p>
+            <div class="rule-examples">
+              <span class="example-tag">"Go back where you came from"</span>
+              <span class="example-tag">"People like you are a disease"</span>
+            </div>
+          </div>
+        </div>
+        <div class="rule-item">
+          <span class="rule-badge" style="background:rgba(239,159,39,0.15); color:#EF9F27;">Threat</span>
+          <div class="rule-body">
+            <p class="rule-title">Content implying harm or violence</p>
+            <p class="rule-desc">Any message that directly or indirectly threatens physical harm, stalking, or violence against a person.</p>
+            <div class="rule-examples">
+              <span class="example-tag">"Watch your back"</span>
+              <span class="example-tag">"I know where you live"</span>
+            </div>
+          </div>
+        </div>
+        <div class="rule-item">
+          <span class="rule-badge" style="background:rgba(216,90,48,0.15); color:#D85A30;">Offensive</span>
+          <div class="rule-body">
+            <p class="rule-title">Insulting or derogatory language</p>
+            <p class="rule-desc">Hostile, demeaning, or abusive language intended to insult or humiliate without a specific threat or hate speech element.</p>
+            <div class="rule-examples">
+              <span class="example-tag">"You're such an idiot"</span>
+              <span class="example-tag">"Shut up you moron"</span>
+            </div>
+          </div>
+        </div>
+        <div class="rule-item">
+          <span class="rule-badge" style="background:rgba(29,158,117,0.15); color:#1D9E75;">Safe</span>
+          <div class="rule-body">
+            <p class="rule-title">No harmful content detected</p>
+            <p class="rule-desc">Neutral, positive, or constructive content that does not contain any threatening, hateful, or offensive language.</p>
+            <div class="rule-examples">
+              <span class="example-tag">"Great job today!"</span>
+              <span class="example-tag">"Hope you have a great day"</span>
+            </div>
+          </div>
+        </div>
+        <div class="rule-item info">
+          <span class="rule-badge" style="background:rgba(79,142,247,0.15); color:#4F8EF7;">Model Info</span>
+          <div class="rule-body">
+            <p class="rule-title">TF-IDF + Logistic Regression · 82.6% accuracy</p>
+            <p class="rule-desc">Trained on 47,692 real social media posts. Text is preprocessed by removing URLs, mentions, and special characters before classification.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
